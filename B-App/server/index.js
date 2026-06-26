@@ -1,11 +1,10 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-const axios = require("axios");
-require("dotenv").config();
-console.log("ENV:", process.env.MONGODB_URI);
+const twilio = require("twilio");
 
 const app = express();
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
@@ -49,18 +48,19 @@ app.post("/api/auth/send-otp", async (req, res) => {
   otpStore[phone] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 };
 
   try {
-    await axios.get("https://www.fast2sms.com/dev/bulkV2", {
-      params: {
-        authorization: process.env.FAST2SMS_API_KEY,
-        variables_values: otp,
-        route: "otp",
-        numbers: phone,
-      },
+    const twilioClient = twilio(
+      process.env.TWILIO_ACCOUNT_SID,
+      process.env.TWILIO_AUTH_TOKEN
+    );
+    await twilioClient.messages.create({
+      body: `Your B App OTP is ${otp}. Valid for 5 minutes.`,
+      from: process.env.TWILIO_PHONE,
+      to: `+91${phone}`,
     });
-    console.log(`OTP ${otp} sent to ${phone}`);
+    console.log(`OTP ${otp} sent to +91${phone}`);
     res.json({ message: "OTP sent successfully" });
   } catch (err) {
-    console.error("Fast2SMS error:", err.response?.data || err.message);
+    console.error("Twilio error:", err.message);
     res.status(500).json({ message: "Failed to send OTP. Try again." });
   }
 });
@@ -82,9 +82,11 @@ app.post("/api/auth/verify-otp", async (req, res) => {
   let user = await User.findOne({ phoneNumber: `+91${phone}` });
   if (!user) user = await User.create({ phoneNumber: `+91${phone}` });
 
-  const token = jwt.sign({ userId: user._id, phone: user.phoneNumber }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
+  const token = jwt.sign(
+    { userId: user._id, phone: user.phoneNumber },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 
   res.json({ token, user: { id: user._id, phone: user.phoneNumber } });
 });
