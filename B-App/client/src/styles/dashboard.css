@@ -1,0 +1,47 @@
+/* ── Stat Grid ── */
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.stat-card {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  box-shadow: var(--shadow);
+}
+.stat-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.stat-value { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.stat-value.teal { color: var(--teal-dark); }
+.stat-note { font-size: 12px; color: var(--muted); }
+.stat-note.warning { color: var(--amber); }
+
+/* ── Dash Cards ── */
+.dash-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.dash-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+.dash-card.full { margin-bottom: 20px; }
+.card-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 16px; }
+
+/* ── Donut Chart ── */
+.donut-wrap { display: flex; justify-content: center; margin-bottom: 16px; }
+.donut-svg { width: 140px; height: 140px; }
+.legend { display: flex; flex-direction: column; gap: 8px; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-name { flex: 1; color: var(--muted); }
+.legend-val { font-weight: 600; color: var(--text); }
+
+/* ── Trend Chart ── */
+.trend-svg { width: 100%; }
+.trend-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 8px; padding: 0 8px; }
+
+/* ── Budget Tracker ── */
+.budget-list { display: flex; flex-direction: column; gap: 16px; }
+.budget-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.budget-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.budget-right { display: flex; align-items: center; gap: 12px; }
+.budget-amounts { font-size: 13px; color: var(--muted); }
+.budget-badge { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 100px; }
+.budget-badge.ok { background: #dcfce7; color: #16a34a; }
+.budget-badge.warn { background: #fef3c7; color: #d97706; }
+.budget-badge.over { background: #fee2e2; color: #dc2626; }
+.progress-bar { height: 8px; background: var(--light); border-radius: 100px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 100px; transition: width 0.3s; }
+.progress-fill.ok { background: var(--teal); }
+.progress-fill.warn { background: var(--amber); }
+.progress-fill.over { background: var(--red); }

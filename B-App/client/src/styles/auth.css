@@ -1,0 +1,32 @@
+.auth-bg { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%); padding: 24px; }
+.auth-card { background: #fff; border-radius: 20px; padding: 40px; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.1); }
+.auth-logo-row { display: flex; align-items: center; gap: 14px; margin-bottom: 32px; }
+.auth-logo { width: 52px; height: 52px; background: linear-gradient(135deg, var(--teal), var(--teal-dark)); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.auth-brand { font-size: 20px; font-weight: 700; color: var(--text); }
+.auth-brand-sub { font-size: 12px; color: var(--muted); }
+.toast { padding: 12px 16px; border-radius: 10px; font-size: 13.5px; font-weight: 500; margin-bottom: 20px; }
+.toast.error { background: #fee2e2; color: #dc2626; }
+.toast.success { background: #dcfce7; color: #16a34a; }
+.auth-title { font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.auth-desc { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+.field-label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+.phone-row { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+.phone-row:focus-within { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(20,184,166,0.12); }
+.phone-prefix { padding: 12px 14px; background: var(--light); font-weight: 600; font-size: 14px; border-right: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+.phone-input { flex: 1; border: none; outline: none; padding: 12px 14px; font-size: 16px; font-weight: 500; }
+.auth-btn { width: 100%; padding: 14px; background: var(--teal); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+.auth-btn:hover:not(:disabled) { background: var(--teal-dark); }
+.auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.auth-note { text-align: center; font-size: 12px; color: var(--muted); margin-top: 14px; }
+.back-link { background: none; border: none; color: var(--teal); font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 16px; display: block; }
+.otp-row { display: flex; gap: 10px; margin-bottom: 24px; justify-content: center; }
+.otp-box { width: 50px; height: 56px; border: 1.5px solid var(--border); border-radius: 10px; text-align: center; font-size: 22px; font-weight: 700; outline: none; transition: all 0.15s; }
+.otp-box:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(20,184,166,0.12); }
+.otp-box.filled { border-color: var(--teal); color: var(--teal-dark); }
+.resend-row { text-align: center; margin-top: 16px; }
+.resend-timer { font-size: 13px; color: var(--muted); }
+.resend-btn { background: none; border: none; color: var(--teal); font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: underline; }
+
+/* ── Spinner ── */
+.spin { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }

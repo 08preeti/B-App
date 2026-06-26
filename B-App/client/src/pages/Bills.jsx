@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { uploadToCloudinary } from "../utils/cloudinary";
 const MOCK_BILLS = [
   { id: 1, vendor: "Indigo Airlines", date: "2026-06-15", category: "Travel", amount: 5840, tax: 420, payment: "UPI", billNo: "IN-4013" },
   { id: 2, vendor: "Cafe Coffee Day", date: "2026-06-16", category: "Food", amount: 540, tax: 0, payment: "UPI", billNo: "CCD-2291" },
@@ -25,6 +25,8 @@ export default function Bills() {
   const [showAddCat, setShowAddCat] = useState(false);
   const [form, setForm] = useState({ vendor: "", date: "", category: "Food", amount: "", tax: "", payment: "UPI", billNo: "", notes: "" });
 
+  const[uploadin, setUploading] = useState(false);
+
   const filtered = bills.filter((b) => {
     if (catFilter !== "All" && b.category !== catFilter) return false;
     if (taxOnly && b.tax === 0) return false;
@@ -32,12 +34,37 @@ export default function Bills() {
     return true;
   });
 
-  const handleAdd = () => {
-    if (!form.vendor || !form.date || !form.amount) return;
-    setBills([{ ...form, id: Date.now(), amount: +form.amount, tax: +form.tax || 0 }, ...bills]);
-    setShowModal(false);
-    setForm({ vendor: "", date: "", category: "Food", amount: "", tax: "", payment: "UPI", billNo: "", notes: "" });
-  };
+  const handleAdd = async () => {
+  if (!form.vendor || !form.date || !form.amount) return;
+
+  let fileUrl = null;
+  let fileName = null;
+
+  if (uploadedFile) {
+    try {
+      setUploading(true);
+      const result = await uploadToCloudinary(uploadedFile);
+      fileUrl = result.url;
+      fileName = uploadedFile.name;
+    } catch (err) {
+      alert("File upload failed. Please try again.");
+      setUploading(false);
+      return;
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  setBills([{
+    ...form, id: Date.now(),
+    amount: +form.amount, tax: +form.tax || 0,
+    fileUrl, fileName,
+  }, ...bills]);
+
+  setShowModal(false);
+  setUploadedFile(null);
+  setForm({ vendor: "", date: "", category: "Food", amount: "", tax: "", payment: "UPI", billNo: "", notes: "" });
+};
 
   const handleDelete = (id) => setBills(bills.filter((b) => b.id !== id));
 
@@ -166,7 +193,9 @@ export default function Bills() {
             </div>
             <div className="modal-footer">
               <button className="cancel-btn" onClick={() => setShowModal(false)}>Cancel</button>
-              <button className="primary-btn" onClick={handleAdd}>Save Bill</button>
+              <button className="primary-btn" onClick={handleAdd} disabled={uploading}>
+  {uploading ? "Uploading..." : "Save Bill"}
+</button>
             </div>
           </div>
         </div>
