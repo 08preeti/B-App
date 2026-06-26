@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import heroLogo from "../assets/hero.png";
 
 const navItems = [
   { path: "dashboard", label: "Dashboard", icon: "⊞" },
@@ -21,13 +22,13 @@ export default function Layout() {
     <div className="layout">
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <div className="s-logo-icon">B</div>
-          <div>
-            <div className="s-logo-name">B App</div>
-            <div className="s-logo-sub">Business • Budget • Bills</div>
-          </div>
-        </div>
-        <div className="s-subtitle">Track expenses and manage budgets</div>
+  <img src={heroLogo} alt="B App Logo" className="s-logo-img" />
+  <div>
+    <div className="s-logo-name">B App</div>
+    <div className="s-logo-sub">Business • Budget • Bills</div>
+  </div>
+</div>
+<div className="s-subtitle">Track expenses and manage budgets</div>
         <nav className="sidebar-nav">
           {navItems.map((item) => (
             <NavLink key={item.path} to={`/app/${item.path}`}

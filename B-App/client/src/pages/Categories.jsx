@@ -46,7 +46,7 @@ export default function Categories() {
           </div>
         ))}
 
-        {/* Add new */}
+        
         <div className="cat-card add-cat">
           <input className="cat-input" placeholder="New category name..."
             value={newCat} onChange={(e) => setNewCat(e.target.value)}

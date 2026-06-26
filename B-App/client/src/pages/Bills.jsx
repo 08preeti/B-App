@@ -9,7 +9,7 @@ const MOCK_BILLS = [
   { id: 6, vendor: "Airtel Postpaid", date: "2026-06-10", category: "Subscriptions", amount: 799, tax: 144, payment: "Auto-pay", billNo: "AT-4438" },
 ];
 
-const CATEGORIES = ["All", "Travel", "Food", "Medical", "Office", "Fashion", "Subscriptions"];
+const DEFAULT_CATEGORIES = ["Travel", "Food", "Medical", "Office", "Fashion", "Subscriptions"];
 const CAT_COLORS = { Travel: "#14b8a6", Food: "#f59e0b", Medical: "#ef4444", Office: "#3b82f6", Fashion: "#8b5cf6", Subscriptions: "#10b981" };
 
 function fmt(n) { return "₹" + n.toLocaleString("en-IN"); }
@@ -20,6 +20,9 @@ export default function Bills() {
   const [taxOnly, setTaxOnly] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [bills, setBills] = useState(MOCK_BILLS);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [newCategory, setNewCategory] = useState("");
+  const [showAddCat, setShowAddCat] = useState(false);
   const [form, setForm] = useState({ vendor: "", date: "", category: "Food", amount: "", tax: "", payment: "UPI", billNo: "", notes: "" });
 
   const filtered = bills.filter((b) => {
@@ -38,6 +41,15 @@ export default function Bills() {
 
   const handleDelete = (id) => setBills(bills.filter((b) => b.id !== id));
 
+  const handleAddCategory = () => {
+    const trimmed = newCategory.trim();
+    if (!trimmed || categories.includes(trimmed)) return;
+    setCategories([...categories, trimmed]);
+    setForm({ ...form, category: trimmed });
+    setNewCategory("");
+    setShowAddCat(false);
+  };
+
   return (
     <div className="page">
       <div className="page-header">
@@ -48,12 +60,12 @@ export default function Bills() {
         <button className="primary-btn" onClick={() => setShowModal(true)}>+ Add Bill</button>
       </div>
 
-      {/* Filters */}
       <div className="filter-bar">
         <input className="search-input" placeholder="🔍 Search vendor or bill number..."
           value={search} onChange={(e) => setSearch(e.target.value)} />
         <select className="select-input" value={catFilter} onChange={(e) => setCatFilter(e.target.value)}>
-          {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+          <option>All</option>
+          {categories.map((c) => <option key={c}>{c}</option>)}
         </select>
         <label className="tax-toggle">
           <input type="checkbox" checked={taxOnly} onChange={(e) => setTaxOnly(e.target.checked)} />
@@ -61,7 +73,6 @@ export default function Bills() {
         </label>
       </div>
 
-      {/* Bills Table */}
       <div className="table-card">
         {filtered.map((bill) => (
           <div key={bill.id} className="bill-row">
@@ -70,7 +81,7 @@ export default function Bills() {
               <div className="bill-vendor">{bill.vendor}</div>
               <div className="bill-meta">{bill.date} · {bill.billNo} · {bill.payment}</div>
             </div>
-            <span className="cat-badge" style={{ background: CAT_COLORS[bill.category] + "22", color: CAT_COLORS[bill.category] }}>
+            <span className="cat-badge" style={{ background: (CAT_COLORS[bill.category] || "#6b7280") + "22", color: CAT_COLORS[bill.category] || "#6b7280" }}>
               {bill.category}
             </span>
             <div className="bill-amount">{fmt(bill.amount)}</div>
@@ -83,7 +94,6 @@ export default function Bills() {
         {filtered.length === 0 && <div className="empty-state">No bills found</div>}
       </div>
 
-      {/* Add Bill Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -109,12 +119,35 @@ export default function Bills() {
                   <label>Tax (₹)</label>
                   <input type="number" value={form.tax} onChange={(e) => setForm({ ...form, tax: e.target.value })} placeholder="0" />
                 </div>
+
+                {/* Category with Add option */}
                 <div className="field">
                   <label>Category</label>
-                  <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-                    {CATEGORIES.filter((c) => c !== "All").map((c) => <option key={c}>{c}</option>)}
+                  <select value={form.category} onChange={(e) => {
+                    if (e.target.value === "__add__") {
+                      setShowAddCat(true);
+                    } else {
+                      setForm({ ...form, category: e.target.value });
+                    }
+                  }}>
+                    {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                    <option value="__add__">+ Add new category</option>
                   </select>
+                  {showAddCat && (
+                    <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                      <input
+                        placeholder="New category name"
+                        value={newCategory}
+                        onChange={(e) => setNewCategory(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
+                        style={{ flex: 1 }}
+                      />
+                      <button className="primary-btn" onClick={handleAddCategory}>Add</button>
+                      <button className="cancel-btn" onClick={() => { setShowAddCat(false); setNewCategory(""); }}>✕</button>
+                    </div>
+                  )}
                 </div>
+
                 <div className="field">
                   <label>Payment Mode</label>
                   <select value={form.payment} onChange={(e) => setForm({ ...form, payment: e.target.value })}>

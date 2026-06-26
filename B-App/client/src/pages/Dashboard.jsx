@@ -48,7 +48,7 @@ export default function Dashboard() {
         <button className="primary-btn">+ Add Bill</button>
       </div>
 
-      {/* Stat Cards */}
+   
       <div className="stat-grid">
         <div className="stat-card">
           <div className="stat-label">Total Spend</div>
@@ -73,7 +73,7 @@ export default function Dashboard() {
       </div>
 
       <div className="dash-row">
-        {/* Spend by Category */}
+      
         <div className="dash-card">
           <h3 className="card-title">Spend by Category</h3>
           <div className="donut-wrap">
@@ -108,7 +108,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Monthly Trend */}
+        
         <div className="dash-card">
           <h3 className="card-title">Monthly Trend</h3>
           <div className="trend-chart">
@@ -134,7 +134,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Budget Tracker */}
+     
       <div className="dash-card full">
         <h3 className="card-title">Budget Tracker</h3>
         <div className="budget-list">
