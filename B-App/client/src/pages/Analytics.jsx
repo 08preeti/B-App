@@ -1,18 +1,64 @@
-const DATA = [
-  { month: "Jan", travel: 3200, food: 1800, medical: 500, office: 2100 },
-  { month: "Feb", travel: 5400, food: 2200, medical: 800, office: 1900 },
-  { month: "Mar", travel: 2100, food: 1600, medical: 1200, office: 3400 },
-  { month: "Apr", travel: 6800, food: 2800, medical: 600, office: 2800 },
-  { month: "May", travel: 4200, food: 2100, medical: 900, office: 2200 },
-  { month: "Jun", travel: 6840, food: 540, medical: 1260, office: 4200 },
-];
+import { useState, useEffect } from "react";
+import { api } from "../api";
 
-const COLORS = { travel: "#14b8a6", food: "#f59e0b", medical: "#ef4444", office: "#3b82f6" };
+const CAT_COLORS = {
+  Travel: "#0ea5a0", Food: "#f59e0b", Medical: "#ef4444",
+  Office: "#3b82f6", Fashion: "#8b5cf6", Subscriptions: "#10b981", Other: "#64748b"
+};
+const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-function fmt(n) { return "₹" + n.toLocaleString("en-IN"); }
+function fmt(n) { return "₹" + Number(n).toLocaleString("en-IN"); }
 
 export default function Analytics() {
-  const maxVal = Math.max(...DATA.flatMap((d) => [d.travel, d.food, d.medical, d.office]));
+  const [bills, setBills] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api("/bills").then(setBills).finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="page"><p style={{color:"var(--muted)",paddingTop:20}}>Loading analytics…</p></div>;
+
+  if (bills.length === 0) return (
+    <div className="page">
+      <div className="page-header">
+        <div><h1 className="page-title">Analytics</h1><p className="page-sub">Spending trends across categories</p></div>
+      </div>
+      <div style={{ textAlign:"center", padding:"80px 24px", color:"var(--muted)" }}>
+        <div style={{ fontSize:48, marginBottom:12, opacity:0.3 }}>📊</div>
+        <div style={{ fontSize:16, fontWeight:600, marginBottom:6 }}>No data yet</div>
+        <div style={{ fontSize:13 }}>Add some bills to see your spending analytics.</div>
+      </div>
+    </div>
+  );
+
+  // Build monthly breakdown by category from real data
+  const monthMap = {};
+  bills.forEach(b => {
+    if (!b.date) return;
+    const [yr, mo] = b.date.split("-");
+    const key = `${yr}-${mo}`;
+    if (!monthMap[key]) monthMap[key] = { month: MONTH_NAMES[parseInt(mo) - 1], year: yr, cats: {} };
+    const cat = b.category || "Other";
+    monthMap[key].cats[cat] = (monthMap[key].cats[cat] || 0) + b.amount;
+  });
+
+  const months = Object.values(monthMap).sort((a, b) => {
+    const ai = MONTH_NAMES.indexOf(a.month), bi = MONTH_NAMES.indexOf(b.month);
+    return a.year !== b.year ? a.year - b.year : ai - bi;
+  }).slice(-6);
+
+  const allCats = [...new Set(bills.map(b => b.category).filter(Boolean))];
+  const maxVal = Math.max(...months.flatMap(m => Object.values(m.cats)), 1);
+
+  // Stats
+  const totalByMonth = months.map(m => ({ month: m.month, total: Object.values(m.cats).reduce((s,v)=>s+v,0) }));
+  const highestMonth = totalByMonth.reduce((a,b) => a.total > b.total ? a : b, { month:"—", total:0 });
+  const catTotals = {};
+  bills.forEach(b => { const c = b.category||"Other"; catTotals[c]=(catTotals[c]||0)+b.amount; });
+  const topCat = Object.entries(catTotals).sort((a,b)=>b[1]-a[1])[0] || ["—", 0];
+  const avgSpend = totalByMonth.length ? Math.round(totalByMonth.reduce((s,m)=>s+m.total,0)/totalByMonth.length) : 0;
+  const totalGST = bills.reduce((s,b)=>s+(b.tax||0),0);
 
   return (
     <div className="page">
@@ -24,37 +70,48 @@ export default function Analytics() {
       </div>
 
       <div className="analytics-grid">
+        {/* Bar Chart */}
         <div className="dash-card full">
           <h3 className="card-title">Monthly Breakdown by Category</h3>
-          <div className="bar-chart">
-            {DATA.map((d) => (
-              <div key={d.month} className="bar-group">
-                {["travel", "food", "medical", "office"].map((key) => (
-                  <div key={key} className="bar-wrap" title={`${key}: ${fmt(d[key])}`}>
-                    <div className="bar" style={{ height: `${(d[key] / maxVal) * 140}px`, background: COLORS[key] }} />
+          {months.length === 0 ? (
+            <p style={{ color:"var(--muted)", fontSize:13 }}>Not enough data yet.</p>
+          ) : (
+            <>
+              <div className="bar-chart">
+                {months.map(m => (
+                  <div key={m.month + m.year} className="bar-group">
+                    {allCats.map(cat => (
+                      <div key={cat} className="bar-wrap" title={`${cat}: ${fmt(m.cats[cat]||0)}`}>
+                        <div className="bar" style={{
+                          height: `${((m.cats[cat]||0) / maxVal) * 150}px`,
+                          background: CAT_COLORS[cat] || "#94a3b8"
+                        }} />
+                      </div>
+                    ))}
+                    <div className="bar-label">{m.month}</div>
                   </div>
                 ))}
-                <div className="bar-label">{d.month}</div>
               </div>
-            ))}
-          </div>
-          <div className="legend" style={{ marginTop: 16 }}>
-            {Object.entries(COLORS).map(([key, color]) => (
-              <div key={key} className="legend-item">
-                <span className="legend-dot" style={{ background: color }} />
-                <span className="legend-name" style={{ textTransform: "capitalize" }}>{key}</span>
+              <div className="legend" style={{ marginTop: 28, flexDirection:"row", flexWrap:"wrap", gap:"12px 20px" }}>
+                {allCats.map(cat => (
+                  <div key={cat} className="legend-item">
+                    <span className="legend-dot" style={{ background: CAT_COLORS[cat]||"#94a3b8" }} />
+                    <span className="legend-name" style={{ textTransform:"capitalize" }}>{cat}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
 
-        <div className="stat-grid" style={{ marginTop: 0 }}>
+        {/* Stats */}
+        <div className="stat-grid" style={{ marginTop:0 }}>
           {[
-            { label: "Highest Month", value: "June 2026", sub: "₹16,629 total" },
-            { label: "Most Spent Category", value: "Travel", sub: "₹6,840 in June" },
-            { label: "Avg Monthly Spend", value: "₹11,240", sub: "Last 6 months" },
-            { label: "GST This Year", value: "₹4,820", sub: "CGST + SGST + IGST" },
-          ].map((s) => (
+            { label:"Highest Month",         value: highestMonth.month,  sub: fmt(highestMonth.total) + " total" },
+            { label:"Top Category",          value: topCat[0],           sub: fmt(topCat[1]) + " total" },
+            { label:"Avg Monthly Spend",     value: fmt(avgSpend),       sub: `Last ${totalByMonth.length} month${totalByMonth.length!==1?"s":""}` },
+            { label:"Total GST Paid",        value: fmt(totalGST),       sub: "CGST + SGST + IGST" },
+          ].map(s => (
             <div key={s.label} className="stat-card">
               <div className="stat-label">{s.label}</div>
               <div className="stat-value teal">{s.value}</div>

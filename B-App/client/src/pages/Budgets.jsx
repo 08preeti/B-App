@@ -1,13 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { api } from "../api";
 
-const MOCK_BUDGETS = [
-  { id: 1, category: "Food", limit: 3000, spent: 1380, start: "2026-06-01", end: "2026-06-30" },
-  { id: 2, category: "Fashion", limit: 2000, spent: 2150, start: "2026-06-01", end: "2026-06-30" },
-  { id: 3, category: "Travel", limit: 7000, spent: 6840, start: "2026-06-01", end: "2026-06-30" },
-  { id: 4, category: "Office", limit: 5000, spent: 4200, start: "2026-06-01", end: "2026-06-30" },
-];
-
-const CATEGORIES = ["Travel", "Food", "Medical", "Office", "Fashion", "Subscriptions", "Other"];
 const CAT_COLORS = { Travel: "#14b8a6", Food: "#f59e0b", Medical: "#ef4444", Office: "#3b82f6", Fashion: "#8b5cf6", Subscriptions: "#10b981", Other: "#6b7280" };
 
 function fmt(n) { return "₹" + Number(n).toLocaleString("en-IN"); }
@@ -15,23 +8,47 @@ function fmt(n) { return "₹" + Number(n).toLocaleString("en-IN"); }
 function statusInfo(spent, limit) {
   const pct = (spent / limit) * 100;
   if (pct >= 100) return { label: "Over budget", cls: "over" };
-  if (pct >= 80) return { label: `⚠ ${Math.round(pct)}% used`, cls: "warn" };
+  if (pct >= 80)  return { label: `⚠ ${Math.round(pct)}% used`, cls: "warn" };
   return { label: "On track", cls: "ok" };
 }
 
 export default function Budgets() {
-  const [budgets, setBudgets] = useState(MOCK_BUDGETS);
+  const [budgets, setBudgets] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ category: "Food", limit: "", start: "", end: "" });
+  const [form, setForm] = useState({ categoryId: "", limit: "", start: "", end: "" });
+  const [loading, setLoading] = useState(true);
 
-  const handleAdd = () => {
-    if (!form.limit || !form.start || !form.end) return;
-    setBudgets([...budgets, { ...form, id: Date.now(), spent: 0, limit: +form.limit }]);
+  useEffect(() => {
+    Promise.all([api("/budgets"), api("/categories")])
+      .then(([budgetsData, catsData]) => {
+        setBudgets(budgetsData);
+        setCategories(catsData);
+        if (catsData.length > 0) setForm(f => ({ ...f, categoryId: catsData[0]._id }));
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleAdd = async () => {
+    if (!form.limit || !form.start || !form.end || !form.categoryId) return;
+    const saved = await api("/budgets", {
+      method: "POST",
+      body: JSON.stringify({ ...form, limit: +form.limit }),
+    });
+    // Server returns computed spent=0 for new budget; add category name for display
+    const cat = categories.find(c => c._id === form.categoryId);
+    setBudgets([...budgets, { ...saved, spent: 0, category: cat?.name,
+      start: form.start, end: form.end }]);
     setShowModal(false);
-    setForm({ category: "Food", limit: "", start: "", end: "" });
+    setForm({ categoryId: categories[0]?._id || "", limit: "", start: "", end: "" });
   };
 
-  const handleDelete = (id) => setBudgets(budgets.filter((b) => b.id !== id));
+  const handleDelete = async (id) => {
+    await api(`/budgets/${id}`, { method: "DELETE" });
+    setBudgets(budgets.filter((b) => b._id !== id && b.id !== id));
+  };
+
+  if (loading) return <div className="page"><p>Loading budgets...</p></div>;
 
   return (
     <div className="page">
@@ -49,7 +66,7 @@ export default function Budgets() {
           const { label, cls } = statusInfo(b.spent, b.limit);
           const color = CAT_COLORS[b.category] || "#14b8a6";
           return (
-            <div key={b.id} className="budget-card">
+            <div key={b._id || b.id} className="budget-card">
               <div className="bc-top">
                 <div className="bc-left">
                   <span className="cat-badge" style={{ background: color + "22", color }}>{b.category}</span>
@@ -57,7 +74,7 @@ export default function Budgets() {
                 </div>
                 <div className="bc-right">
                   <span className={`budget-badge ${cls}`}>{label}</span>
-                  <button className="icon-btn delete" onClick={() => handleDelete(b.id)}>🗑</button>
+                  <button className="icon-btn delete" onClick={() => handleDelete(b._id || b.id)}>🗑</button>
                 </div>
               </div>
               <div className="bc-amounts">
@@ -71,6 +88,7 @@ export default function Budgets() {
             </div>
           );
         })}
+        {budgets.length === 0 && <div className="empty-state">No budgets yet</div>}
       </div>
 
       {showModal && (
@@ -84,8 +102,8 @@ export default function Budgets() {
               <div className="form-grid">
                 <div className="field">
                   <label>Category</label>
-                  <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-                    {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                  <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
+                    {categories.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
                   </select>
                 </div>
                 <div className="field">

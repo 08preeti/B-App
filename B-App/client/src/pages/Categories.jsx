@@ -1,27 +1,34 @@
-import { useState } from "react";
-
-const DEFAULT_CATS = [
-  { id: 1, name: "Travel", isDefault: true, color: "#14b8a6" },
-  { id: 2, name: "Food", isDefault: true, color: "#f59e0b" },
-  { id: 3, name: "Medical", isDefault: true, color: "#ef4444" },
-  { id: 4, name: "Office", isDefault: true, color: "#3b82f6" },
-  { id: 5, name: "Fashion", isDefault: true, color: "#8b5cf6" },
-  { id: 6, name: "Subscriptions", isDefault: false, color: "#10b981" },
-  { id: 7, name: "Other", isDefault: true, color: "#6b7280" },
-];
+import { useState, useEffect } from "react";
+import { api } from "../api";
 
 export default function Categories() {
-  const [cats, setCats] = useState(DEFAULT_CATS);
+  const [cats, setCats] = useState([]);
   const [newCat, setNewCat] = useState("");
   const [newColor, setNewColor] = useState("#14b8a6");
+  const [loading, setLoading] = useState(true);
 
-  const handleAdd = () => {
+  useEffect(() => {
+    api("/categories")
+      .then(setCats)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleAdd = async () => {
     if (!newCat.trim()) return;
-    setCats([...cats, { id: Date.now(), name: newCat.trim(), isDefault: false, color: newColor }]);
+    const saved = await api("/categories", {
+      method: "POST",
+      body: JSON.stringify({ name: newCat.trim(), isDefault: false, color: newColor }),
+    });
+    setCats([...cats, saved]);
     setNewCat("");
   };
 
-  const handleDelete = (id) => setCats(cats.filter((c) => c.id !== id));
+  const handleDelete = async (id) => {
+    await api(`/categories/${id}`, { method: "DELETE" });
+    setCats(cats.filter((c) => c._id !== id));
+  };
+
+  if (loading) return <div className="page"><p>Loading categories...</p></div>;
 
   return (
     <div className="page">
@@ -34,19 +41,18 @@ export default function Categories() {
 
       <div className="cat-grid">
         {cats.map((cat) => (
-          <div key={cat.id} className="cat-card">
+          <div key={cat._id} className="cat-card">
             <div className="cat-left">
               <div className="cat-dot" style={{ background: cat.color }} />
               <span className="cat-name">{cat.name}</span>
               {cat.isDefault && <span className="default-badge">default</span>}
             </div>
             {!cat.isDefault && (
-              <button className="icon-btn delete" onClick={() => handleDelete(cat.id)}>🗑</button>
+              <button className="icon-btn delete" onClick={() => handleDelete(cat._id)}>🗑</button>
             )}
           </div>
         ))}
 
-        
         <div className="cat-card add-cat">
           <input className="cat-input" placeholder="New category name..."
             value={newCat} onChange={(e) => setNewCat(e.target.value)}
