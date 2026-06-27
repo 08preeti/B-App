@@ -21,21 +21,23 @@ export default function Categories() {
     });
     setCats([...cats, saved]);
     setNewCat("");
+    setNewColor("#14b8a6"); // ✅ reset color after adding
   };
 
   const handleDelete = async (id) => {
+    if (!confirm("Delete this category?")) return; // ✅ confirmation before delete
     await api(`/categories/${id}`, { method: "DELETE" });
     setCats(cats.filter((c) => c._id !== id));
   };
 
-  if (loading) return <div className="page"><p>Loading categories...</p></div>;
+  if (loading) return <div className="page"><p style={{ color: "var(--muted)", paddingTop: 20 }}>Loading categories…</p></div>;
 
   return (
     <div className="page">
       <div className="page-header">
         <div>
           <h1 className="page-title">Categories</h1>
-          <p className="page-sub">Organise bills into default and custom categories</p>
+          <p className="page-sub">{cats.length} categories · {cats.filter(c => !c.isDefault).length} custom</p>
         </div>
       </div>
 
@@ -43,7 +45,7 @@ export default function Categories() {
         {cats.map((cat) => (
           <div key={cat._id} className="cat-card">
             <div className="cat-left">
-              <div className="cat-dot" style={{ background: cat.color }} />
+              <div className="cat-dot" style={{ background: cat.color || "#14b8a6" }} />
               <span className="cat-name">{cat.name}</span>
               {cat.isDefault && <span className="default-badge">default</span>}
             </div>
@@ -53,12 +55,22 @@ export default function Categories() {
           </div>
         ))}
 
+        {/* Add new category card */}
         <div className="cat-card add-cat">
-          <input className="cat-input" placeholder="New category name..."
-            value={newCat} onChange={(e) => setNewCat(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAdd()} />
-          <input type="color" className="color-picker" value={newColor}
-            onChange={(e) => setNewColor(e.target.value)} title="Pick color" />
+          <input
+            className="cat-input"
+            placeholder="New category name..."
+            value={newCat}
+            onChange={(e) => setNewCat(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+          />
+          <input
+            type="color"
+            className="color-picker"
+            value={newColor}
+            onChange={(e) => setNewColor(e.target.value)}
+            title="Pick color"
+          />
           <button className="add-cat-btn" onClick={handleAdd}>+ Add</button>
         </div>
       </div>

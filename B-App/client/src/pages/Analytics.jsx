@@ -32,7 +32,7 @@ export default function Analytics() {
     </div>
   );
 
-  // Build monthly breakdown by category from real data
+
   const monthMap = {};
   bills.forEach(b => {
     if (!b.date) return;
